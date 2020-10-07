@@ -1,0 +1,64 @@
+body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  background-color: #222628!important;
+}
+
+#root {
+  background-color: #222628;
+}
+
+.content * {
+  background-color: #222628;
+}
+
+.App {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+.link-container {
+  width: 100%;
+  justify-content: flex-end;
+  margin-right: 100px;
+}
+
+.summary-container {
+  padding: 20px;
+  font-size: 15px;
+  text-align: center;
+  border-bottom: 1px solid gray;
+  margin-bottom: 20px;
+}
+
+.tab-content {
+  padding: 25px 10px;
+}
+
+.btn-trader {
+  padding: 0px 20px !important;
+}
+
+.align-center {
+  text-align: center!important;
+}
+
+.align-center-header .ag-header-cell-text {
+  position: absolute;
+  left: 50%;
+  transform: translate(-50%);
+}
+
+span.count {
+  background-color: transparent!important;
+  color: white!important;
+  font-size: 15px;
+}
+
+/* span.count:first-child, span.split:first-child {
+  display: none!important;
+} */
