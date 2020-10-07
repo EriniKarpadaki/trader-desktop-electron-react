@@ -13,7 +13,7 @@ const InquiryPage = () => {
     >
       <Summary>
         Context Based more Attributes or summary level details will be displayed
-        here. Please let me know the details. 1.0.1
+        here. Please let me know the details. 1.2.0
       </Summary>
       <Tabs id="controlled-tab" activeKey={key} onSelect={(k) => setKey(k)}>
         <Tab eventKey="all" title="All">
