@@ -1,7 +1,7 @@
 {
   "name": "electron-react-boilerplate",
   "productName": "TraderDesktop",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Electron application boilerplate based on React, React Router, Webpack, React Hot Loader for rapid application development",
   "scripts": {
     "build": "concurrently \"yarn build-main\" \"yarn build-renderer\"",
@@ -102,20 +102,16 @@
     ],
     "publish": {
       "provider": "github",
-      "owner": "erini-k",
-      "host": "github.com",
-      "protocol": "https",
-      "repo": "trader-using-electron-react-boilerplate",
-      "token": "6e10f721432aaaff02d3d1dde741a974a57be9c7",
+      "token": "6f0499d51ae0fdc2669d0b79b2183621d7051944",
       "private": false
     }
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/EriniKarpadaki/trader-using-electron-react-boilerplate.git"
+    "url": "git+https://github.com/EriniKarpadaki/trader-desktop-electron-react.git"
   },
   "author": {
-    "name": "Erini K",
+    "name": "Erini Karpadaki",
     "email": "ckjaner2@gmail.com",
     "url": "https://github.com/EriniKarpadaki/"
   },
@@ -138,7 +134,7 @@
   ],
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/EriniKarpadaki/trader-using-electron-react-boilerplate/issues"
+    "url": "https://github.com/EriniKarpadaki/trader-desktop-electron-react/issues"
   },
   "keywords": [
     "electron",
@@ -152,7 +148,7 @@
     "hot",
     "reload"
   ],
-  "homepage": "https://github.com/EriniKarpadaki/trader-using-electron-react-boilerplate#readme",
+  "homepage": "https://github.com/EriniKarpadaki/trader-desktop-electron-react#readme",
   "jest": {
     "testURL": "http://localhost/",
     "moduleNameMapper": {
