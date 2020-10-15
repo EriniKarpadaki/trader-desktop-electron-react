@@ -1,3 +1,5 @@
 {
-  "ServerUrl": "http://52.4.13.149"
+  "ServerUrl": "http://52.4.13.149",
+  "online": "http://52.4.13.149",
+  "local": "http://localhost:3080"
 }

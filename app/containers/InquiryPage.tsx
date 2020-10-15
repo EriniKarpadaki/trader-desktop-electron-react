@@ -1,10 +1,18 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, FunctionComponent } from 'react';
 import { Tabs, Tab } from 'react-bootstrap';
+import { useSelector, useDispatch } from 'react-redux';
 import InquiryContent from '../components/Inquiry/InquiryContent';
 import Summary from '../components/Summary';
+import { setFilterKey, getInquiries } from '../features/inquiry/inquirySlice';
 
-const InquiryPage = () => {
-  const [key, setKey] = useState<any>('all');
+type InquiryPageProps = {};
+
+const InquiryPage: FunctionComponent<InquiryPageProps> = ({}) => {
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    dispatch(getInquiries());
+  }, []);
 
   return (
     <div
@@ -13,9 +21,9 @@ const InquiryPage = () => {
     >
       <Summary>
         Context Based more Attributes or summary level details will be displayed
-        here. Please let me know the details. 1.2.0
+        here. Please let me know the details. 1.3.0
       </Summary>
-      <Tabs id="controlled-tab" activeKey={key} onSelect={(k) => setKey(k)}>
+      <Tabs defaultActiveKey="all" id="uncontrolled-tab-example">
         <Tab eventKey="all" title="All">
           <InquiryContent state="all" />
         </Tab>
@@ -36,6 +44,7 @@ const InquiryPage = () => {
           <InquiryContent state={4} />
         </Tab>
       </Tabs>
+      ;
     </div>
   );
 };

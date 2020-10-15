@@ -11,7 +11,7 @@
 import 'core-js/stable';
 import 'regenerator-runtime/runtime';
 import path from 'path';
-import { app, BrowserWindow, screen } from 'electron';
+import { app, BrowserWindow, screen, ipcMain } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
 import MenuBuilder from './menu';
@@ -26,7 +26,8 @@ export default class AppUpdater {
   }
 }
 
-let mainWindow: BrowserWindow | null = null;
+// let mainWindow: BrowserWindow | null = null;
+const windows = {};
 
 if (process.env.NODE_ENV === 'production') {
   const sourceMapSupport = require('source-map-support');
@@ -50,13 +51,20 @@ const installExtensions = async () => {
   ).catch(console.log);
 };
 
-const createWindow = async () => {
+const createWindow = async (num: number | 0) => {
   if (
     process.env.NODE_ENV === 'development' ||
     process.env.DEBUG_PROD === 'true'
   ) {
     await installExtensions();
   }
+
+  let mainWindow: BrowserWindow | null = null;
+
+  const urls = [
+    `file://${__dirname}/app.html`,
+    `file://${__dirname}/app.html#/offering`,
+  ];
 
   const RESOURCES_PATH = app.isPackaged
     ? path.join(process.resourcesPath, 'resources')
@@ -85,10 +93,10 @@ const createWindow = async () => {
           },
   };
 
-  Object.assign(opts, config.get('winBounds'));
+  Object.assign(opts, config.get('winBounds' + num));
 
   mainWindow = new BrowserWindow(opts);
-  mainWindow.loadURL(`file://${__dirname}/app.html`);
+  mainWindow.loadURL(urls[num]);
 
   let cmd = process.argv[1];
   if (cmd == '--squirrel-firstrun') {
@@ -110,14 +118,14 @@ const createWindow = async () => {
     }
   });
 
-  let mainWin = mainWindow;
+  windows['window' + num] = mainWindow;
 
-  mainWindow.on('close', () => {
-    config.set('winBounds', mainWin.getBounds());
+  windows['window' + num].on('close', () => {
+    config.set('winBounds' + num, windows['window' + num].getBounds());
   });
 
-  mainWindow.on('closed', () => {
-    mainWindow = null;
+  windows['window' + num].on('closed', () => {
+    windows['window' + num] = null;
   });
 
   const menuBuilder = new MenuBuilder(mainWindow);
@@ -142,13 +150,38 @@ app.on('window-all-closed', () => {
 
 if (process.env.E2E_BUILD === 'true') {
   // eslint-disable-next-line promise/catch-or-return
-  app.whenReady().then(createWindow);
+  app.whenReady().then(function () {
+    createWindow(0);
+    createWindow(1);
+  });
 } else {
-  app.on('ready', createWindow);
+  app.on('ready', function () {
+    createWindow(0);
+    createWindow(1);
+  });
 }
 
 app.on('activate', () => {
+  console.log('windows', windows);
   // On macOS it's common to re-create a window in the app when the
   // dock icon is clicked and there are no other windows open.
-  if (mainWindow === null) createWindow();
+  if (windows['window0'] === null) createWindow(0);
+  if (windows['window1'] === null) createWindow(1);
+});
+
+ipcMain.on('asynchronous-message', (event, pageNum) => {
+  console.log(pageNum);
+  console.log(windows);
+  // 0: inquiry page, 1: offering page
+  if (windows['window' + pageNum] === null) {
+    createWindow(pageNum);
+  } else {
+    windows['window' + pageNum].focus();
+  }
+  event.reply('asynchronous-reply', 'Ok');
+});
+
+ipcMain.on('synchronous-message', (event, arg) => {
+  console.log(arg);
+  event.returnValue = 'Ok';
 });

@@ -1,13 +1,21 @@
 import React, { useState, useEffect, FunctionComponent } from 'react'; // importing FunctionComponent
 import { AgGridColumn, AgGridReact } from 'ag-grid-react';
-import { ServerSideRowModelModule } from '@ag-grid-enterprise/server-side-row-model';
 import { MenuModule } from '@ag-grid-enterprise/menu';
 import { ColumnsToolPanelModule } from '@ag-grid-enterprise/column-tool-panel';
+import { useSelector, useDispatch } from 'react-redux';
 
 import OfferBtnRenderer from './renderer/OfferBtnRenderer';
 import TimerRenderer from './renderer/TimerRenderer';
 import StateRenderer from './renderer/StateRenderer';
 import config from '../../constants/config.json';
+import { selectFilteredOfferings } from '../../features/offering/offeringSlice';
+
+const Kafka = require('kafka-node');
+const kafkaConfig = require('../../kafka/config');
+
+const { Producer } = Kafka;
+const client = new Kafka.KafkaClient({ kafkaHost: kafkaConfig.KafkaHost });
+const producer = new Producer(client, { requireAcks: 0, partitionerType: 2 });
 
 type OfferingContentProps = {
   state: any;
@@ -18,29 +26,37 @@ const OfferingContent: FunctionComponent<OfferingContentProps> = ({
 }) => {
   const [gridApi, setGridApi] = useState(null);
   const [gridColumnApi, setGridColumnApi] = useState(null);
+  const dispatch = useDispatch();
+  const offerings = useSelector(selectFilteredOfferings);
 
   useEffect(() => {
     // readItems();
   });
 
+  const pushDataToKafka = () => {
+    const dataToPush = { test: 'test data' };
+    console.log(dataToPush);
+    try {
+      const payloadToKafkaTopic = [
+        { topic: kafkaConfig.KafkaTopic, messages: JSON.stringify(dataToPush) },
+      ];
+      console.log(payloadToKafkaTopic);
+      producer.send(payloadToKafkaTopic, (err: any, data: any) => {
+        console.log('data: ', data);
+      });
+      producer.on('error', function (err: any) {
+        console.log('kafka-error:', err);
+      });
+      // producer.on('ready', async function () {
+      // });
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   function onGridReady(params: any) {
     setGridApi(params.api);
     setGridColumnApi(params.columnApi);
-
-    const httpRequest = new XMLHttpRequest();
-    const updateData = (data: any) => {
-      const fakeServer = createFakeServer(data);
-      const datasource = createServerSideDatasource(fakeServer);
-      params.api.setServerSideDatasource(datasource);
-    };
-
-    httpRequest.open('GET', `${config.ServerUrl}/offerings?state=${state}`);
-    httpRequest.send();
-    httpRequest.onreadystatechange = () => {
-      if (httpRequest.readyState === 4 && httpRequest.status === 200) {
-        updateData(JSON.parse(httpRequest.responseText));
-      }
-    };
   }
 
   function onCellValueChanged(info: any) {
@@ -58,7 +74,7 @@ const OfferingContent: FunctionComponent<OfferingContentProps> = ({
       style={{ height: '400px', width: '' }}
     >
       <AgGridReact
-        modules={[ServerSideRowModelModule, MenuModule, ColumnsToolPanelModule]}
+        modules={[MenuModule, ColumnsToolPanelModule]}
         onGridReady={onGridReady}
         onCellValueChanged={onCellValueChanged}
         paginationAutoPageSize
@@ -72,7 +88,14 @@ const OfferingContent: FunctionComponent<OfferingContentProps> = ({
           //   return formatNumber(params.value);
           // },
         }}
-        rowModelType="serverSide"
+        rowData={offerings.filter((offering) => {
+          if (state == 'all') {
+            return true;
+          }
+          return offering.state == state;
+        })}
+        immutableData
+        getRowNodeId={(data) => data.id}
       >
         <AgGridColumn
           field="timer"
@@ -122,40 +145,6 @@ const OfferingContent: FunctionComponent<OfferingContentProps> = ({
 
 function numberValueParser(params) {
   return Number(params.newValue);
-}
-
-function createServerSideDatasource(server) {
-  return {
-    getRows(params) {
-      console.log('[Datasource] - rows requested by grid: ', params.request);
-      const response = server.getData(params.request);
-      setTimeout(function () {
-        if (response.success) {
-          params.successCallback(response.rows, response.lastRow);
-        } else {
-          params.failCallback();
-        }
-      }, 500);
-    },
-  };
-}
-function createFakeServer(allData) {
-  return {
-    getData(request) {
-      const requestedRows = allData.slice(request.startRow, request.endRow);
-      const lastRow = getLastRowIndex(request, requestedRows);
-      return {
-        success: true,
-        rows: requestedRows,
-        lastRow,
-      };
-    },
-  };
-}
-function getLastRowIndex(request, results) {
-  if (!results) return undefined;
-  const currentLastRow = request.startRow + results.length;
-  return currentLastRow < request.endRow ? currentLastRow : undefined;
 }
 
 export default OfferingContent;

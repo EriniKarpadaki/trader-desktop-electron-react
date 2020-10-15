@@ -1,64 +1,73 @@
 import React, { useState, useEffect, FunctionComponent } from 'react'; // importing FunctionComponent
 import { AgGridColumn, AgGridReact } from 'ag-grid-react';
-import { ServerSideRowModelModule } from '@ag-grid-enterprise/server-side-row-model';
 import { MenuModule } from '@ag-grid-enterprise/menu';
 import { ColumnsToolPanelModule } from '@ag-grid-enterprise/column-tool-panel';
+import { SetFilterModule } from '@ag-grid-enterprise/set-filter';
+import { ClientSideRowModelModule } from '@ag-grid-community/client-side-row-model';
+import { useSelector, useDispatch } from 'react-redux';
 
 import SideBtnRenderer from './renderer/SideBtnRenderer';
 import SubmitBtnRenderer from './renderer/SubmitBtnRenderer';
 import PassBtnRenderer from './renderer/PassBtnRenderer';
 import TimerRenderer from './renderer/TimerRenderer';
 import StateRenderer from './renderer/StateRenderer';
-import config from '../../constants/config.json';
+import { selectInquiries } from '../../features/inquiry/inquirySlice';
+import PushDataToKafka from '../../kafka/producer';
 
 type InquiryContentProps = {
   state: any;
+  // readItems: Function;
 };
-
+console.log('out', PushDataToKafka);
 const InquiryContent: FunctionComponent<InquiryContentProps> = ({ state }) => {
   const [gridApi, setGridApi] = useState(null);
   const [gridColumnApi, setGridColumnApi] = useState(null);
+  const dispatch = useDispatch();
+  const inquiries = useSelector(selectInquiries);
 
-  useEffect(() => {
-    // readItems();
-  });
+  useEffect(() => {}, []);
 
   function onGridReady(params: any) {
     setGridApi(params.api);
     setGridColumnApi(params.columnApi);
-
-    const httpRequest = new XMLHttpRequest();
-    const updateData = (data: any) => {
-      const fakeServer = createFakeServer(data);
-      const datasource = createServerSideDatasource(fakeServer);
-      params.api.setServerSideDatasource(datasource);
-    };
-
-    httpRequest.open('GET', `${config.ServerUrl}/inquiries?state=${state}`);
-    httpRequest.send();
-    httpRequest.onreadystatechange = () => {
-      if (httpRequest.readyState === 4 && httpRequest.status === 200) {
-        updateData(JSON.parse(httpRequest.responseText));
-      }
-    };
   }
 
   function onCellValueChanged(info: any) {
-    const data = {
+    const dataToPush = {
       newValue: info.newValue,
       field: info.colDef.field,
     };
-    console.log(data);
-    // here
+    console.log('onCellValueChanged', dataToPush);
   }
+
+  const valueSetter = (params) => {
+    console.log(params);
+    const dataToPush = {
+      grid: 'inquiry',
+      _id: params.data._id,
+      newValue: params.newValue,
+      field: params.colDef.field,
+    };
+    console.log(dataToPush);
+    console.log('PushDataToKafka', PushDataToKafka);
+    // return false;
+    PushDataToKafka(dataToPush);
+    return true;
+  };
 
   return (
     <div
       className="ag-theme-alpine-dark"
-      style={{ height: '400px', width: '' }}
+      style={{ height: '400px', width: '', padding: '12px 10px' }}
     >
+      <button onClick={PushDataToKafka}>kafka send data</button>
       <AgGridReact
-        modules={[ServerSideRowModelModule, MenuModule, ColumnsToolPanelModule]}
+        modules={[
+          ClientSideRowModelModule,
+          SetFilterModule,
+          MenuModule,
+          ColumnsToolPanelModule,
+        ]}
         onGridReady={onGridReady}
         onCellValueChanged={onCellValueChanged}
         paginationAutoPageSize
@@ -66,13 +75,24 @@ const InquiryContent: FunctionComponent<InquiryContentProps> = ({ state }) => {
           flex: 1,
           minWidth: 100,
           resizable: true,
+          sortable: true,
           cellClass: 'align-center',
           headerClass: 'align-center-header',
           // valueFormatter: function (params) {
           //   return formatNumber(params.value);
           // },
         }}
-        rowModelType="serverSide"
+        rowData={inquiries.filter((inq) => {
+          if (state == 'all') {
+            return true;
+          }
+          return inq.state == state;
+        })}
+        animateRows
+        // immutableData
+        // getRowNodeId={(data) => data.id}
+        // reactNext
+        // deltaRowDataMode
       >
         <AgGridColumn
           field="timer"
@@ -92,6 +112,7 @@ const InquiryContent: FunctionComponent<InquiryContentProps> = ({ state }) => {
           maxWidth="100"
           width="100"
           editable
+          valueSetter={valueSetter}
         />
 
         <AgGridColumn
@@ -122,6 +143,7 @@ const InquiryContent: FunctionComponent<InquiryContentProps> = ({ state }) => {
           // minWidth="400"
           width="700"
           editable
+          valueSetter={valueSetter}
         />
 
         <AgGridColumn
@@ -134,42 +156,8 @@ const InquiryContent: FunctionComponent<InquiryContentProps> = ({ state }) => {
   );
 };
 
-function numberValueParser(params) {
+function numberValueParser(params: { newValue: any }) {
   return Number(params.newValue);
-}
-
-function createServerSideDatasource(server) {
-  return {
-    getRows(params) {
-      console.log('[Datasource] - rows requested by grid: ', params.request);
-      const response = server.getData(params.request);
-      setTimeout(function () {
-        if (response.success) {
-          params.successCallback(response.rows, response.lastRow);
-        } else {
-          params.failCallback();
-        }
-      }, 500);
-    },
-  };
-}
-function createFakeServer(allData) {
-  return {
-    getData(request) {
-      const requestedRows = allData.slice(request.startRow, request.endRow);
-      const lastRow = getLastRowIndex(request, requestedRows);
-      return {
-        success: true,
-        rows: requestedRows,
-        lastRow,
-      };
-    },
-  };
-}
-function getLastRowIndex(request, results) {
-  if (!results) return undefined;
-  const currentLastRow = request.startRow + results.length;
-  return currentLastRow < request.endRow ? currentLastRow : undefined;
 }
 
 export default InquiryContent;

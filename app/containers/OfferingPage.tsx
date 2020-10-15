@@ -1,10 +1,18 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, FunctionComponent } from 'react';
 import { Tabs, Tab } from 'react-bootstrap';
+import { useSelector, useDispatch } from 'react-redux';
 import OfferingContent from '../components/Offering/OfferingContent';
 import Summary from '../components/Summary';
+import { setFilterKey, getOfferings } from '../features/offering/offeringSlice';
 
-const OfferingPage = () => {
-  const [key, setKey] = useState<any>('all');
+type OfferingPageProps = {};
+
+const OfferingPage: FunctionComponent<OfferingPageProps> = ({}) => {
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    dispatch(getOfferings());
+  }, []);
 
   return (
     <div
@@ -13,9 +21,9 @@ const OfferingPage = () => {
     >
       <Summary>
         Context Based more Attributes or summary level details will be displayed
-        here. Please let me know the details.
+        here. Please let me know the details. 1.2.0
       </Summary>
-      <Tabs id="controlled-tab" activeKey={key} onSelect={(k) => setKey(k)}>
+      <Tabs defaultActiveKey="all" id="uncontrolled-tab-example">
         <Tab eventKey="all" title="All">
           <OfferingContent state="all" />
         </Tab>

@@ -27,7 +27,32 @@
 
 <body>
   <div id="root"></div>
+
+  <span id="btn_id"></span>
   <script>
+    const button = document.getElementById('btn_id');
+    button.addEventListener('click', () => {
+      createBrowserWindow();
+    });
+
+
+    const createBrowserWindow = async number => {
+      window.open(`file://${__dirname}/app.html#/offering`);
+      return;
+      const remote = require('electron').remote;
+      const BrowserWindow = remote.BrowserWindow;
+      const win = new BrowserWindow({
+        height: 600,
+        width: 800,
+        frame: false,
+        webPreferences: {
+          nodeIntegration: true,
+        }
+      });
+
+      win.loadURL(`file://${__dirname}/app.html#/offering`);
+    }
+
     if (typeof process === 'object') {
       const scripts = [];
 
@@ -54,23 +79,6 @@
     }
   </script>
 
-  <script>
-    const button = document.getElementById('offeringLink');
-    button.addEventListener('click', () => {
-      createBrowserWindow();
-    });
-
-    function createBrowserWindow() {
-      const remote = require('electron').remote;
-      const BrowserWindow = remote.BrowserWindow;
-      const win = new BrowserWindow({
-        height: 600,
-        width: 800
-      });
-
-      win.loadURL('/offerings');
-    }
-  </script>
 </body>
 
 </html>

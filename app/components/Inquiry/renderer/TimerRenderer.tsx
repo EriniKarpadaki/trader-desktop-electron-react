@@ -1,7 +1,11 @@
-import React from 'react';
+import React, { FunctionComponent } from 'react';
 import Countdown from 'react-countdown';
 
-const TimerRenderer = () => {
-  return <Countdown date={Date.now() + 100000} />;
+type TimerRendererProps = {
+  data: any;
+};
+
+const TimerRenderer: FunctionComponent<TimerRendererProps> = ({ data }) => {
+  return <Countdown date={Date.now() + data.timer} />;
 };
 export default TimerRenderer;
